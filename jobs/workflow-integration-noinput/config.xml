@@ -1,0 +1,94 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@1.6">
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties/>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@1.6">
+    <script>tomcatHost = &apos;localhost&apos;
+tomcatPort = &apos;8180&apos;
+appHost = &quot;http://${tomcatHost}:${tomcatPort}&quot;
+tomcatUser = &apos;admin&apos;
+tomcatPassword = &apos;tomcat&apos;
+tomcatDeployUrl = &quot;http://${tomcatUser}:${tomcatPassword}@${tomcatHost}:${tomcatPort}/manager/deploy&quot;
+tomcatUndeployUrl = &quot;http://${tomcatUser}:${tomcatPassword}@${tomcatHost}:${tomcatPort}/manager/undeploy&quot;
+artifactName=&apos;webapp.war&apos;
+
+env.JAVA_HOME=&apos;/usr/lib/jvm/java-openjdk&apos;
+node(&apos;master&apos;) {
+   git url: &apos;https://github.com/jenkinsbyexample/workflow-plugin-pipeline-demo.git&apos;
+   devQAStaging()
+}
+production()
+
+def devQAStaging() {
+    stage &apos;Build&apos;
+    sh &apos;mvn clean package&apos;
+    archive &quot;target/${artifactName}&quot;
+
+    stage &apos;Code Coverage&apos;
+    echo &apos;Using Sonar for code coverage&apos;
+
+    stage &apos;QA&apos;
+
+    parallel(longerTests: {
+        runWithServer {url -&gt;
+            sh &quot;mvn -f sometests/pom.xml test -Durl=${url} -Dduration=30&quot;
+        }
+    }, quickerTests: {
+        runWithServer {url -&gt;
+            sh &quot;mvn -f sometests/pom.xml test -Durl=${url} -Dduration=20&quot;
+        }
+    })
+
+    try {
+        checkpoint(&apos;Before Staging&apos;)
+    } catch (NoSuchMethodError _) {
+        echo &apos;Checkpoint feature available in Jenkins Enterprise by CloudBees.&apos;
+    }
+
+    stage name: &apos;Staging&apos;, concurrency: 1
+    deploy &quot;target/${artifactName}&quot;, &apos;staging&apos;
+}
+
+def production() {
+    echo &quot;Build URL is ${env.BUILD_URL}input/ApprovalAppnameDeployment/submit&quot;
+    // mail body: &quot;Please go to ${env.BUILD_URL}input/&quot;, from: &apos;uaarkoti@cloudbees.com&apos;, replyTo: &apos;uday@cloudbees.com&apos;, subject: &quot;Job ${env.JOB_NAME} build #${env.BUILD_NUMBER} is waiting for your approval&quot;, to: &apos;uaarkoti@cloudbees.com&apos;
+    input id: &apos;ApprovalAppnameDeployment&apos;, message: &apos;Please approve&apos;
+    try {
+        checkpoint(&apos;Before production&apos;)
+    } catch (NoSuchMethodError _) {
+        echo &apos;Checkpoint feature available in Jenkins Enterprise by CloudBees.&apos;
+    }
+    stage name: &apos;Production&apos;, concurrency: 1
+    node(&apos;master&apos;) {
+        sh &quot;curl -I ${appHost}/staging/&quot;
+        // Parameters in an array doesn&apos;t seem to work. Throws java.lang.ClassCastException: org.codehaus.groovy.runtime.GStringImpl cannot be cast to java.lang.String
+        //unarchive mapping: [&quot;target/${artifactName}&quot; : &quot;${artifactName}&quot;]
+        unarchive mapping: [&apos;target/webapp.war&apos; : &apos;webapp.war&apos;]
+        deploy &quot;${artifactName}&quot;, &apos;production&apos;
+        echo &quot;Deployed to ${appHost}/production/&quot;
+    }
+}
+
+def deploy(war, id) {
+    sh &quot;curl --upload-file ${war} &apos;${tomcatDeployUrl}?path=/${id}&amp;update=true&apos;&quot;
+}
+
+def undeploy(id) {
+    sh &quot;curl &apos;${tomcatUndeployUrl}?path=/${id}&apos;&quot;
+}
+
+def runWithServer(body) {
+    def id = UUID.randomUUID().toString()
+    deploy &quot;target/${artifactName}&quot;, id
+    try {
+        body.call &quot;${appHost}/${id}/&quot;
+    } finally {
+        undeploy id
+    }
+}</script>
+    <sandbox>false</sandbox>
+  </definition>
+  <triggers/>
+</flow-definition>
