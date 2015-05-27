@@ -1,12 +1,20 @@
-# workflow-integration
-Example on how to integrate Jenkins Workflow with external applications
+# Workflow Integration with external apps or CLI
+Jenkins Workflow allows developers to do end-to-end automation of their applications all the way from code checkin to production deployment.
 
-# Running Docker container
+In complex environments, end-to-end automation involves manual and automated tasks. Jenkins Workflow supports both. Manual tasks as supported in Jenkins workflow through `input` step. When the workflow reached the `input` step, it pauses. To resume, the rightful owner needs to login and resume the workflow while providing necessary data, as defined in the "input" step. This can be done through Jenkins UI or from an external application as Jenkins Workflow exposes RESTful API's for the same.
+
+In this article, you will see how to leverage the RESTful API's to integrate Jenkins Workflow in your environment.
+
+## Demo container
+For convenience, this entire demo is captured in a docker container so you can see the API's in action.
+
+```
 docker run -p 8080:8080 -p 8180:8180 -it uday/workflow-integration
+```
 
-# Instructions
+## Setup
 
-## REST URL Format
+### REST URL Format
 
 ```
 http://<username>:<password>@<hostname>:<port>/job/<job-name>/<build-number>/input/<input-step-id>/<action>
@@ -25,10 +33,15 @@ action        - The value of action changes depending on whether its an empty or
                 3. abort (empty & abort)
 ```
 
-## Workflow Triggering
+username/password is required if you secured your Jenkins instance.
+
+## Triggering
 
 ### No input required
-In this scenario, the workflow doesn't require any input from the user.
+
+When an `input` step is added to the workflow, it can be added to require user to provide additional data or not.
+
+In this scenario we are going assume that no additional data is required to resume the workflow.
 
 To Proceed
 
@@ -43,19 +56,13 @@ curl -X POST http://192.168.59.103:8080/job/workflow-integration-noinput/1/input
 ```
 
 ### Input required
-In this scenario, the workflow requires input from the user and the data is passed to the InputStep as a combination of key/value pairs and JSON object as shown below.
+In this scenario, the workflow requires input from the user to continue. Once the user provides the data, it is passed to the InputStep as a combination of key/value pairs and JSON object as shown below.
 
 ```
 name:comments
 value:Approved
 json:{"parameter": {"name": "comments", "value": "Approved"}}
 proceed:Approve
-```
-
-The JSON object above need to be url encoded. The POST request would look something like this
-
-```
-name=comments&value=Approved&json=%7B%22parameter%22%3A+%7B%22name%22%3A+%22comments%22%2C+%22value%22%3A+%22Approved%22%7D%7D&proceed=Approve
 ```
 
 To Proceed
