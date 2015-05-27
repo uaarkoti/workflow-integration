@@ -12,10 +12,10 @@ In this article, you will see how to leverage the RESTful API's to integrate Jen
 ### RESTful URL Format
 
 ```
-http://<username>:<password>@<hostname>:<port>/job/<job-name>/<build-number>/input/<input-step-id>/<action>
+http://<username>:<api-token>@<hostname>:<port>/<prefix>/job/<job-name>/<build-number>/input/<input-step-id>/<action>
 
 username      - When security is enabled on Jenkins, the username you want to use to authenticate
-password      - When security is enabled on Jenkins, the password you want for the username
+api-token     - Can be obtained from http://<hostname>:<port>/<prefix>/user/<username>/configure
 hostname      - Host where Jenkins is running
 port          - Port where Jenkins is running (default : 8080)
 job-name      - Name of your workflow job
@@ -23,9 +23,9 @@ build-number  - The build number of the workflow job
 input-step-id - The id attribute you provided to your input step. If the 'id' attribute is not provided, Jenkins will create a random id.
                 It is recommended to enforce the 'id' that is easy to reference
 action        - The value of action changes depending on whether its an empty or non-empty input. The different values of action are
-                1. submit (non-empty)
-                2. proceedEmpty (empty & proceed)
-                3. abort (empty & abort)
+                1. submit (proceed with user input)
+                2. proceedEmpty (proceed without user input)
+                3. abort (abort workflow)
 ```
 
 username/password is required if you secured your Jenkins instance.
@@ -65,8 +65,6 @@ curl -X POST http://192.168.59.103:8080/job/workflow-integration-noinput/1/input
 In this scenario, the workflow requires input from the user to continue. Once the user provides the data, it is passed to the InputStep as a combination of key/value pairs and JSON object as shown below.
 
 ```
-name:comments
-value:Approved
 json:{"parameter": {"name": "comments", "value": "Approved"}}
 proceed:Approve
 ```
@@ -74,13 +72,13 @@ proceed:Approve
 To Proceed
 
 ```
-curl -d "name=comments&value=Approved&proceed=Approve" --data-urlencode json='{"parameter":{"name":"comments","value":"Approved"}}' http://192.168.59.103:8080/job/workflow-integration/6/input/ApproveDeployment/submit
+curl -d proceed=Approve --data-urlencode json='{"parameter":{"name":"comments","value":"Approved"}}' http://192.168.59.103:8080/job/workflow-integration/6/input/ApproveDeployment/submit
 ```
 
 To Abort
 
 ```
-curl -X POST http://192.168.59.103:8080/job/workflow-integration/1/input/ApprovalAppnameDeployment/submit
+curl -X POST http://192.168.59.103:8080/job/workflow-integration/1/input/ApprovalAppnameDeployment/abort
 ```
 
 ## Demo
