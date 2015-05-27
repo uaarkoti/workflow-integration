@@ -1,7 +1,7 @@
 # Workflow Integration with external apps or CLI
 [Jenkins Workflow](https://wiki.jenkins-ci.org/display/JENKINS/Workflow+Plugin) allows developers to do end-to-end automation of their applications all the way from build (triggered by a code commit by a developer) to deployment into production.
 
-End-to-end automation typically involves manual and automated tests/tasks. Jenkins Workflow supports both. Manual tasks are supported in through [input step](https://github.com/jenkinsci/workflow-plugin/blob/master/TUTORIAL.md#pausing-flyweight-vs-heavyweight-executors). When a workflow reaches the `input` step, it pauses for input. To continue, the responsible owner needs to login and resume the workflow while providing necessary data, as defined in the `input` step. This can be done through Jenkins UI or from an external application as Jenkins Workflow exposes RESTful API's for the same.
+End-to-end automation typically involves manual and automated tests/tasks. Jenkins Workflow supports both. Manual tasks are supported through [input step](https://github.com/jenkinsci/workflow-plugin/blob/master/TUTORIAL.md#pausing-flyweight-vs-heavyweight-executors). When a workflow reaches the `input` step, it pauses for input. To continue, the responsible owner needs to login and resume the workflow while providing necessary data, as defined in the `input` step. This can be done through Jenkins UI or from an external application as Jenkins Workflow exposes RESTful API's for the same.
 
 In this article, you will see how to leverage the RESTful API's to integrate Jenkins Workflow in your environment.
 
@@ -14,7 +14,7 @@ docker run -p 8080:8080 -p 8180:8180 -it uday/workflow-integration
 
 ## Setup
 
-### REST URL Format
+### RESTful URL Format
 
 ```
 http://<username>:<password>@<hostname>:<port>/job/<job-name>/<build-number>/input/<input-step-id>/<action>
@@ -36,11 +36,22 @@ action        - The value of action changes depending on whether its an empty or
 username/password is required if you secured your Jenkins instance.
 
 ## Triggering
+When you add an `input` step to the workflow, you can require the user to provide additional information to continue (or not). There are a variety of parameters you can request from the user like `string`, `choice`, `password`, `file` etc....
+
+The following input requires `comments` from the user which is of type `string`
+
+```
+input id: 'ApprovalForm', message: 'Please approve', parameters: [[$class: 'StringParameterDefinition', defaultValue: '', description: '', name: 'comments']]
+
+```
+
+The following does not require the user to provide any data to continue. Simply press "Proceed" or "Abort".
+
+```
+input id: 'ApprovalForm', message: 'Please approve'
+```
 
 ### No input required
-
-When an `input` step is added to the workflow, it can be added to require user to provide additional data or not.
-
 In this scenario we are going assume that no additional data is required to resume the workflow.
 
 To Proceed
