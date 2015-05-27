@@ -5,13 +5,6 @@ End-to-end automation typically involves manual and automated tests/tasks. Jenki
 
 In this article, you will see how to leverage the RESTful API's to integrate Jenkins Workflow in your environment.
 
-## Demo container
-For convenience, this entire demo is captured in a docker container so you can see the API's in action.
-
-```
-docker run -p 8080:8080 -p 8180:8180 -it uday/workflow-integration
-```
-
 ## Setup
 
 ### RESTful URL Format
@@ -88,7 +81,19 @@ To Abort
 curl -X POST http://192.168.59.103:8080/job/workflow-integration/1/input/ApprovalAppnameDeployment/submit
 ```
 
-## Conclusion
-As described above, Jenkins Workflow makes it very easy to integrate with external application by exposing manual steps as RESTful endpoints.
+## Demo
+For convenience, this entire demo is captured in a docker container so you can see the API's in action.
 
-While we used `curl` command throughout this example, one should be able to use the same RESTful API's (with the right format) to achieve the same level of integration from any application.
+To run the demo, you'll need [docker installed](https://docs.docker.com/installation/).
+
+```
+docker run -p 8080:8080 -p 8180:8180 -it uday/workflow-integration
+```
+
+To access the demo navigate to `http://<docker-host-ip>:8080` and build any of the jobs. Then from your command line use the above `curl` commands to see how you can trigger the jobs to continue.
+
+
+## Conclusion
+As described above, Jenkins Workflow makes it very easy to integrate with external application by exposing workflow job itself as well as manual steps as RESTful endpoints.
+
+While we used `curl` command throughout this example, one should be able to use the same RESTful API's used by the `curl` command to achieve the same level of integration from any application.
