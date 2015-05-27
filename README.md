@@ -87,3 +87,8 @@ To Abort
 ```
 curl -X POST http://192.168.59.103:8080/job/workflow-integration/1/input/ApprovalAppnameDeployment/submit
 ```
+
+## Conclusion
+As described above, Jenkins Workflow makes it very easy to integrate with external application by exposing manual steps as RESTful endpoints.
+
+While we used `curl` command throughout this example, one should be able to use the same RESTful API's (with the right format) to achieve the same level of integration from any application.
