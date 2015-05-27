@@ -52,9 +52,19 @@ def devQAStaging() {
 }
 
 def production() {
-    echo &quot;Build URL is ${env.BUILD_URL}input/ApprovalAppnameDeployment/submit&quot;
-    // mail body: &quot;Please go to ${env.BUILD_URL}input/&quot;, from: &apos;uaarkoti@cloudbees.com&apos;, replyTo: &apos;uday@cloudbees.com&apos;, subject: &quot;Job ${env.JOB_NAME} build #${env.BUILD_NUMBER} is waiting for your approval&quot;, to: &apos;uaarkoti@cloudbees.com&apos;
-    input id: &apos;ApprovalAppnameDeployment&apos;, message: &apos;Please approve&apos;
+    // When integrating with external application, before pausing the workflow, send all the contextual data
+    // such that the external application can trigger the resume event.
+    // Contextual data should include, URL (as shown below), user data (for authentication and authorization), form data (if workflow requires additional data to continue)
+
+    // A sample mail step if you chose to integrate using mail.
+    // mail body: &quot;Please go to ${env.BUILD_URL}input/&quot;, from: &apos;jenkins.admin@acme.org&apos;, replyTo: &apos;jenkins.admin@acme.org&apos;, subject: &quot;Job ${env.JOB_NAME} build #${env.BUILD_NUMBER} is waiting for your approval&quot;, to: &apos;approvers@acme.org&apos;
+
+    // Pause the workflow. You can resume this workflow from with in Jenkins or from an external application using HTTP REST API call.
+    // Sample CURL command to resume
+	  //   curl -X POST http://username:password@hostname:port/job/workflow-integration/&gt;build-number&lt;/input/ApproveDeployment/proceedEmpty
+    // Sample CURL command to abort
+    //   curl -X POST http://username:password@hostname:port/job/workflow-integration/&gt;build-number&lt;/input/ApproveDeployment/submit
+    input id: &apos;ApproveDeployment&apos;, message: &apos;Please approve&apos;
     try {
         checkpoint(&apos;Before production&apos;)
     } catch (NoSuchMethodError _) {
